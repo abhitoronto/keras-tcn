@@ -1,3 +1,5 @@
+#!/usr/bin/env python2.7
+
 import inspect
 from typing import List
 
@@ -7,11 +9,11 @@ from tensorflow.keras.layers import Activation, SpatialDropout1D, Lambda
 from tensorflow.keras.layers import Layer, Conv1D, Dense, BatchNormalization, LayerNormalization
 
 
-def is_power_of_two(num: int):
+def is_power_of_two(num):
     return num != 0 and ((num & (num - 1)) == 0)
 
 
-def adjust_dilations(dilations: list):
+def adjust_dilations(dilations):
     if all([is_power_of_two(i) for i in dilations]):
         return dilations
     else:
@@ -22,21 +24,21 @@ def adjust_dilations(dilations: list):
 class ResidualBlock(Layer):
 
     def __init__(self,
-                 dilation_rate: int,
-                 nb_filters: int,
-                 kernel_size: int,
-                 padding: str,
-                 activation: str = 'relu',
-                 dropout_rate: float = 0,
-                 kernel_initializer: str = 'he_normal',
-                 use_batch_norm: bool = False,
-                 use_layer_norm: bool = False,
+                 dilation_rate,
+                 nb_filters,
+                 kernel_size,
+                 padding,
+                 activation = 'relu',
+                 dropout_rate = 0,
+                 kernel_initializer = 'he_normal',
+                 use_batch_norm = False,
+                 use_layer_norm = False,
                  **kwargs):
         """Defines the residual block for the WaveNet TCN
 
         Args:
             x: The previous layer in the model
-            training: boolean indicating whether the layer should behave in training mode or in inference mode
+            trainingean indicating whether the layer should behave in training mode or in inference mode
             dilation_rate: The dilation power of 2 we are using for this residual block
             nb_filters: The number of convolutional filters to use in this block
             kernel_size: The size of the convolutional kernel
@@ -141,8 +143,12 @@ class ResidualBlock(Layer):
         x = inputs
         self.layers_outputs = [x]
         for layer in self.layers:
-            training_flag = 'training' in dict(inspect.signature(layer.call).parameters)
-            x = layer(x, training=training) if training_flag else layer(x)
+            if training:
+                x = layer(x, training=training)
+            else:
+                x = layer(x)
+            # training_flag = 'training' in dict(inspect.signature(layer.call).parameters)
+            # x = layer(x, training=training) if training_flag else layer(x)
             self.layers_outputs.append(x)
         x2 = self.shape_match_conv(inputs)
         self.layers_outputs.append(x2)
@@ -169,8 +175,8 @@ class TCN(Layer):
             dilations: The list of the dilations. Example is: [1, 2, 4, 8, 16, 32, 64].
             nb_stacks : The number of stacks of residual blocks to use.
             padding: The padding to use in the convolutional layers, 'causal' or 'same'.
-            use_skip_connections: Boolean. If we want to add skip connections from input to each residual blocK.
-            return_sequences: Boolean. Whether to return the last output in the output sequence, or the full sequence.
+            use_skip_connectionsean. If we want to add skip connections from input to each residual blocK.
+            return_sequencesean. Whether to return the last output in the output sequence, or the full sequence.
             activation: The activation used in the residual blocks o = Activation(x + F(x)).
             dropout_rate: Float between 0 and 1. Fraction of the input units to drop.
             kernel_initializer: Initializer for the kernel weights matrix (Conv1D).
@@ -337,21 +343,21 @@ class TCN(Layer):
         return config
 
 
-def compiled_tcn(num_feat,  # type: int
-                 num_classes,  # type: int
-                 nb_filters,  # type: int
-                 kernel_size,  # type: int
-                 dilations,  # type: List[int]
-                 nb_stacks,  # type: int
-                 max_len,  # type: int
-                 output_len=1,  # type: int
-                 padding='causal',  # type: str
-                 use_skip_connections=False,  # type: bool
+def compiled_tcn(num_feat,  # type
+                 num_classes,  # type
+                 nb_filters,  # type
+                 kernel_size,  # type
+                 dilations,  # type[int]
+                 nb_stacks,  # type
+                 max_len,  # type
+                 output_len=1,  # type
+                 padding='causal',  # type
+                 use_skip_connections=False,  # type
                  return_sequences=True,
-                 regression=False,  # type: bool
-                 dropout_rate=0.05,  # type: float
-                 name='tcn',  # type: str,
-                 kernel_initializer='he_normal',  # type: str,
+                 regression=False,  # type
+                 dropout_rate=0.05,  # type
+                 name='tcn',  # type
+                 kernel_initializer='he_normal',  # type
                  activation='relu',  # type:str,
                  opt='adam',
                  lr=0.002,
@@ -370,8 +376,8 @@ def compiled_tcn(num_feat,  # type: int
         nb_stacks : The number of stacks of residual blocks to use.
         max_len: The maximum sequence length, use None if the sequence length is dynamic.
         padding: The padding to use in the convolutional layers.
-        use_skip_connections: Boolean. If we want to add skip connections from input to each residual blocK.
-        return_sequences: Boolean. Whether to return the last output in the output sequence, or the full sequence.
+        use_skip_connectionsean. If we want to add skip connections from input to each residual blocK.
+        return_sequencesean. Whether to return the last output in the output sequence, or the full sequence.
         regression: Whether the output should be continuous or discrete.
         dropout_rate: Float between 0 and 1. Fraction of the input units to drop.
         activation: The activation used in the residual blocks o = Activation(x + F(x)).
@@ -436,7 +442,7 @@ def compiled_tcn(num_feat,  # type: int
     return model
 
 
-def tcn_full_summary(model: Model, expand_residual_blocks=True):
+def tcn_full_summary(model, expand_residual_blocks=True):
     layers = model._layers.copy()  # store existing layers
     model._layers.clear()  # clear layers
 
