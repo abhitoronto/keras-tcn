@@ -3,6 +3,7 @@ from utils import get_xy_kfolds
 from sklearn.metrics import mean_squared_error
 import numpy as np
 
+
 # dataset source: https://github.com/laiguokun/multivariate-time-series-data
 # exchange rate: the collection of the daily exchange rates of eight foreign countries
 # including Australia, British, Canada, Switzerland, China, Japan, New Zealand and
@@ -33,8 +34,8 @@ if __name__ == '__main__':
         y_true = enc.inverse_transform([test_y]).flatten()
         mse_cur = mean_squared_error(y_true, y_pred)
         mse_list.append(mse_cur)
-        print(f"train_set_size:{train_x.shape[0]}")
-        print(f"y_true:{y_true}")
-        print(f"y_pred:{y_pred}")
-        print(f"mse:{mse_cur}")
-    print(f"finial loss on test set: {np.mean(mse_list)}")
+        print("train_set_size:{}".format(train_x.shape[0]))
+        print("y_true:{}".format(y_true))
+        print("y_pred:{}".format(y_pred))
+        print("mse:{}".format(mse_cur))
+    print("finial loss on test set: {}".format(np.mean(mse_list)))

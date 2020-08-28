@@ -8,6 +8,12 @@ from tensorflow.keras import layers
 from tensorflow.keras.layers import Activation, SpatialDropout1D, Lambda
 from tensorflow.keras.layers import Layer, Conv1D, Dense, BatchNormalization, LayerNormalization
 
+# Fix for CUDNN failed to init: https://github.com/tensorflow/tensorflow/issues/24828#issuecomment-464910864
+import tensorflow.compat.v1 as tf1
+
+config = tf1.ConfigProto()
+config.gpu_options.allow_growth = True
+session = tf1.Session(config=config)
 
 def is_power_of_two(num):
     return num != 0 and ((num & (num - 1)) == 0)

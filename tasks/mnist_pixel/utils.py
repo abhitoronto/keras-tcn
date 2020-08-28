@@ -1,6 +1,6 @@
 import numpy as np
-from keras.datasets import mnist
-from keras.utils import to_categorical
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.utils import to_categorical
 
 
 def data_generator():
@@ -26,4 +26,5 @@ def data_generator():
 
 
 if __name__ == '__main__':
-    print(data_generator())
+    a, b = data_generator()
+    print(a[0][0:1].shape[1])
