@@ -2,6 +2,7 @@
 
 import inspect
 from typing import List
+import copy
 
 from tensorflow.keras import backend as K, Model, Input, optimizers
 from tensorflow.keras import layers
@@ -382,8 +383,8 @@ def compiled_tcn(num_feat,  # type
         nb_stacks : The number of stacks of residual blocks to use.
         max_len: The maximum sequence length, use None if the sequence length is dynamic.
         padding: The padding to use in the convolutional layers.
-        use_skip_connectionsean. If we want to add skip connections from input to each residual blocK.
-        return_sequencesean. Whether to return the last output in the output sequence, or the full sequence.
+        use_skip_connections: If we want to add skip connections from input to each residual blocK.
+        return_sequences: Whether to return the last output in the output sequence, or the full sequence.
         regression: Whether the output should be continuous or discrete.
         dropout_rate: Float between 0 and 1. Fraction of the input units to drop.
         activation: The activation used in the residual blocks o = Activation(x + F(x)).
@@ -449,8 +450,8 @@ def compiled_tcn(num_feat,  # type
 
 
 def tcn_full_summary(model, expand_residual_blocks=True):
-    layers = model._layers.copy()  # store existing layers
-    model._layers.clear()  # clear layers
+    layers = copy.copy(model._layers)  # store existing layers
+    model._layers = []  # clear layers
 
     for i in range(len(layers)):
         if isinstance(layers[i], TCN):
@@ -471,5 +472,5 @@ def tcn_full_summary(model, expand_residual_blocks=True):
     model.summary()  # print summary
 
     # restore original layers
-    model._layers.clear()
+    model._layers = []
     [model._layers.append(lyr) for lyr in layers]
