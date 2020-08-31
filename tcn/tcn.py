@@ -6,7 +6,7 @@ import copy
 
 from tensorflow.keras import backend as K, Model, Input, optimizers
 from tensorflow.keras import layers
-from tensorflow.keras.layers import Activation, SpatialDropout1D, Lambda
+from tensorflow.keras.layers import Activation, SpatialDropout1D, Lambda, Dropout
 from tensorflow.keras.layers import Layer, Conv1D, Dense, BatchNormalization, LayerNormalization
 
 # Fix for CUDNN failed to init: https://github.com/tensorflow/tensorflow/issues/24828#issuecomment-464910864
@@ -351,13 +351,14 @@ class TCN(Layer):
 
 
 def compiled_tcn(num_feat,  # type
-                 num_classes,  # type
+                #  num_classes,  # type
                  nb_filters,  # type
                  kernel_size,  # type
                  dilations,  # type[int]
                  nb_stacks,  # type
                  max_len,  # type
-                 output_len=1,  # type
+                 output_layers=[1],
+                #  output_len=1,  # type
                  padding='causal',  # type
                  use_skip_connections=False,  # type
                  return_sequences=True,
@@ -382,6 +383,7 @@ def compiled_tcn(num_feat,  # type
         dilations: The list of the dilations. Example is: [1, 2, 4, 8, 16, 32, 64].
         nb_stacks : The number of stacks of residual blocks to use.
         max_len: The maximum sequence length, use None if the sequence length is dynamic.
+        output_layers: a list describing the size of the MLP at the end used both for regression and classification
         padding: The padding to use in the convolutional layers.
         use_skip_connections: If we want to add skip connections from input to each residual blocK.
         return_sequences: Whether to return the last output in the output sequence, or the full sequence.
@@ -419,7 +421,11 @@ def compiled_tcn(num_feat,  # type
 
     if not regression:
         # classification
-        x = Dense(num_classes)(x)
+        for l in range(len(output_layers)-1):
+            x = Dense(output_layers[l])(x)
+            x = Activation(activation)(x)
+            x = Dropout(dropout_rate)(x)
+        x = Dense(output_layers[-1])(x)
         x = Activation('softmax')(x)
         output_layer = x
         model = Model(input_layer, output_layer)
@@ -439,7 +445,11 @@ def compiled_tcn(num_feat,  # type
         model.compile(get_opt(), loss='sparse_categorical_crossentropy', metrics=[accuracy])
     else:
         # regression
-        x = Dense(output_len)(x)
+        for l in range(len(output_layers)-1):
+            x = Dense(output_layers[l])(x)
+            x = Activation(activation)(x)
+            x = Dropout(dropout_rate)(x)
+        x = Dense(output_layers[-1])(x)
         x = Activation('linear')(x)
         output_layer = x
         model = Model(input_layer, output_layer)
