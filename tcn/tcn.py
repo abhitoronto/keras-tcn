@@ -453,7 +453,16 @@ def compiled_tcn(num_feat,  # type
         x = Activation('linear')(x)
         output_layer = x
         model = Model(input_layer, output_layer)
-        model.compile(get_opt(), loss='mean_squared_error')
+        def speed_error(y_true, y_pred):
+            speed_true = K.sqrt(K.square(y_true[0]) + K.square(y_true[1]))
+            speed_pred = K.sqrt(K.square(y_pred[0]) + K.square(y_pred[1]))
+            return K.cast(K.abs(speed_true - speed_pred), K.floatx())
+        def angular_speed_error(y_true, y_pred):
+            speed_true = y_true[2]
+            speed_pred = y_pred[2]
+            return K.cast(K.abs(speed_true - speed_pred), K.floatx())
+
+        model.compile(get_opt(), loss='mean_squared_error')#, metrics=[speed_error, angular_speed_error])
     print('model.x = {}'.format(input_layer.shape))
     print('model.y = {}'.format(output_layer.shape))
     return model
