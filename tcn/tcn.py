@@ -4,6 +4,7 @@ import inspect
 from typing import List
 import copy
 
+import tensorflow as tf
 from tensorflow.keras import backend as K, Model, Input, optimizers
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Activation, SpatialDropout1D, Lambda, Dropout
@@ -462,7 +463,9 @@ def compiled_tcn(num_feat,  # type
             speed_pred = y_pred[2]
             return K.cast(K.abs(speed_true - speed_pred), K.floatx())
 
-        model.compile(get_opt(), loss='mean_squared_error')#, metrics=[speed_error, angular_speed_error])
+        model.compile(get_opt(), loss='mean_squared_error',
+                                 metrics=[tf.keras.metrics.MeanAbsoluteError(),
+                                          tf.keras.metrics.CosineSimilarity(axis=1)])
     print('model.x = {}'.format(input_layer.shape))
     print('model.y = {}'.format(output_layer.shape))
     return model
