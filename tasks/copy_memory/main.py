@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-import keras
+import tensorflow.keras as keras
 import numpy as np
 
 from tcn import compiled_tcn
@@ -21,7 +21,7 @@ class PrintSomeValues(keras.callbacks.Callback):
 
 def run_task():
     model = compiled_tcn(num_feat=1,
-                         num_classes=10,
+                         output_layers=[10],
                          nb_filters=10,
                          kernel_size=8,
                          dilations=[2 ** i for i in range(9)],
@@ -32,8 +32,8 @@ def run_task():
                          lr=5e-4,
                          return_sequences=True)
 
-    print(f'x_train.shape = {x_train.shape}')
-    print(f'y_train.shape = {y_train.shape}')
+    # print(f'x_train.shape = {x_train.shape}')
+    # print(f'y_train.shape = {y_train.shape}')
 
     psv = PrintSomeValues()
 
@@ -45,7 +45,7 @@ def run_task():
               callbacks=[psv], batch_size=256)
 
     test_acc = model.evaluate(x=x_test, y=y_test)[1]  # accuracy.
-    with open(f'copy_memory_{str(uuid4())[0:5]}.txt', 'w') as w:
+    with open("copy_memory_{}.txt".format(str(uuid4())[0:5]), 'w') as w:
         w.write(str(test_acc) + '\n')
 
 
