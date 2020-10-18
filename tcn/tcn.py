@@ -6,6 +6,7 @@ import copy
 
 import tensorflow as tf
 from tensorflow.keras import backend as K, Model, Input, optimizers
+from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Activation, SpatialDropout1D, Lambda, Dropout
 from tensorflow.keras.layers import Layer, Conv1D, Dense, BatchNormalization, LayerNormalization
@@ -110,7 +111,7 @@ class ResidualBlock(Layer):
                     elif self.use_layer_norm:
                         self._add_and_activate_layer(LayerNormalization())
 
-                self._add_and_activate_layer(Activation('relu'))
+                self._add_and_activate_layer(Activation('selu'))
                 self._add_and_activate_layer(SpatialDropout1D(rate=self.dropout_rate))
 
             if self.nb_filters != input_shape[-1]:
@@ -424,6 +425,10 @@ def compiled_tcn(num_feat,  # type
         # classification
         for l in range(len(output_layers)-1):
             x = Dense(output_layers[l])(x)
+            if use_batch_norm:
+                x = BatchNormalization()(x)
+            elif use_layer_norm:
+                x = LayerNormalization()(x)
             x = Activation(activation)(x)
             x = Dropout(dropout_rate)(x)
         x = Dense(output_layers[-1])(x)
@@ -443,11 +448,15 @@ def compiled_tcn(num_feat,  # type
             y_pred_labels = K.cast(y_pred_labels, K.floatx())
             return K.cast(K.equal(y_true, y_pred_labels), K.floatx())
 
-        model.compile(get_opt(), loss='categorical_crossentropy', metrics=[tf.keras.metrics.CategoricalAccuracy()])
+        model.compile(get_opt(), metrics=['categorical_accuracy'], loss=CategoricalCrossentropy(from_logits=False)) #'kullback_leibler_divergence')
     else:
         # regression
         for l in range(len(output_layers)-1):
             x = Dense(output_layers[l])(x)
+            if use_batch_norm:
+                x = BatchNormalization()(x)
+            elif use_layer_norm:
+                x = LayerNormalization()(x)
             x = Activation(activation)(x)
             x = Dropout(dropout_rate)(x)
         x = Dense(output_layers[-1])(x)
