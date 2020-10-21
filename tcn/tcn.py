@@ -3,10 +3,13 @@
 import inspect
 from typing import List
 import copy
+import numpy as np
 
 import tensorflow as tf
+from tensorflow_addons.activations import gelu
 from tensorflow.keras import backend as K, Model, Input, optimizers
 from tensorflow.keras.losses import CategoricalCrossentropy
+from tensorflow.keras.utils import get_custom_objects
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Activation, SpatialDropout1D, Lambda, Dropout
 from tensorflow.keras.layers import Layer, Conv1D, Dense, BatchNormalization, LayerNormalization
@@ -17,6 +20,12 @@ import tensorflow.compat.v1 as tf1
 config = tf1.ConfigProto()
 config.gpu_options.allow_growth = True
 session = tf1.Session(config=config)
+
+# For adding custom actication and loss functions
+# Add the GELU function to Keras
+def Gelu(x):
+    return 0.5 * x * (1 + tf.tanh(tf.sqrt(2 / np.pi) * (x + 0.044715 * tf.pow(x, 3))))
+get_custom_objects().update({'gelu': Activation(gelu)})
 
 def is_power_of_two(num):
     return num != 0 and ((num & (num - 1)) == 0)
@@ -448,7 +457,9 @@ def compiled_tcn(num_feat,  # type
             y_pred_labels = K.cast(y_pred_labels, K.floatx())
             return K.cast(K.equal(y_true, y_pred_labels), K.floatx())
 
-        model.compile(get_opt(), metrics=['categorical_accuracy'], loss=CategoricalCrossentropy(from_logits=False)) #'kullback_leibler_divergence')
+        model.compile(get_opt(), metrics=['categorical_accuracy'], loss= \
+                                                                    CategoricalCrossentropy(from_logits=False))
+                                                                    # 'kullback_leibler_divergence')
     else:
         # regression
         for l in range(len(output_layers)-1):
@@ -473,8 +484,8 @@ def compiled_tcn(num_feat,  # type
             return K.cast(K.abs(speed_true - speed_pred), K.floatx())
 
         model.compile(get_opt(), loss='mean_squared_error',
-                                 metrics=[tf.keras.metrics.MeanAbsoluteError()]) #,
-                                        #   tf.keras.metrics.CosineSimilarity(axis=1)])
+                                 metrics=[tf.keras.metrics.MeanAbsoluteError()])
+                                #  metrics=[tf.keras.metrics.CosineSimilarity(axis=1)])
     print('model.x = {}'.format(input_layer.shape))
     print('model.y = {}'.format(output_layer.shape))
     return model
