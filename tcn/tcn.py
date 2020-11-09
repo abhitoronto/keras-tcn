@@ -114,13 +114,14 @@ class ResidualBlock(Layer):
                                                         name=name,
                                                         kernel_initializer=self.kernel_initializer))
 
+                self._add_and_activate_layer(Activation('selu'))
+
                 with K.name_scope('norm_{}'.format(k)):
                     if self.use_batch_norm:
                         self._add_and_activate_layer(BatchNormalization())
                     elif self.use_layer_norm:
                         self._add_and_activate_layer(LayerNormalization())
 
-                self._add_and_activate_layer(Activation('selu'))
                 self._add_and_activate_layer(SpatialDropout1D(rate=self.dropout_rate))
 
             if self.nb_filters != input_shape[-1]:
@@ -434,11 +435,11 @@ def compiled_tcn(num_feat,  # type
         # classification
         for l in range(len(output_layers)-1):
             x = Dense(output_layers[l])(x)
+            x = Activation(activation)(x)
             if use_batch_norm:
                 x = BatchNormalization()(x)
             elif use_layer_norm:
                 x = LayerNormalization()(x)
-            x = Activation(activation)(x)
             x = Dropout(dropout_rate)(x)
         x = Dense(output_layers[-1])(x)
         x = Activation('softmax')(x)
@@ -464,11 +465,11 @@ def compiled_tcn(num_feat,  # type
         # regression
         for l in range(len(output_layers)-1):
             x = Dense(output_layers[l])(x)
+            x = Activation(activation)(x)
             if use_batch_norm:
                 x = BatchNormalization()(x)
             elif use_layer_norm:
                 x = LayerNormalization()(x)
-            x = Activation(activation)(x)
             x = Dropout(dropout_rate)(x)
         x = Dense(output_layers[-1])(x)
         x = Activation('linear')(x)
